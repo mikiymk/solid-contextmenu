@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 
-import MenuItem from "./MenuItem";
+import { MenuItem } from "./MenuItem";
 
 export type AbstractMenuProps = {
   children: React.ReactElement;
@@ -13,7 +13,7 @@ export type AbstractMenuStates = {
   forceSubMenuOpen: boolean;
 };
 
-export default abstract class AbstractMenu<P, S = {}> extends Component<
+export abstract class AbstractMenu<P, S = {}> extends Component<
   P & AbstractMenuProps,
   S & AbstractMenuStates
 > {

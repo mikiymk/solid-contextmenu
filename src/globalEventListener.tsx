@@ -53,4 +53,4 @@ class GlobalEventListener {
   };
 }
 
-export default new GlobalEventListener();
+export const listener = new GlobalEventListener();

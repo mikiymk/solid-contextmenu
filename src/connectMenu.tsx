@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
-import ContextMenuTrigger from "./ContextMenuTrigger";
-import listener from "./globalEventListener";
+import { ContextMenuTrigger } from "./ContextMenuTrigger";
+import { listener } from "./globalEventListener";
 
 // collect ContextMenuTrigger's expected props to NOT pass them on as part of the context
 const ignoredTriggerProps = [
@@ -15,7 +15,7 @@ export type ConnectMenuProps = {
 };
 
 // expect the id of the menu to be responsible for as outer parameter
-export default function <P>(menuId: string) {
+export function connectMenu<P>(menuId: string) {
   // expect menu component to connect as inner parameter
   // <Child/> is presumably a wrapper of <ContextMenu/>
   return function connect(Child: React.ComponentType<P & ConnectMenuProps>) {

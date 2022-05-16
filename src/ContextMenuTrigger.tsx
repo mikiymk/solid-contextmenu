@@ -24,7 +24,7 @@ type HiddenProps = {
   posY: number;
 };
 
-export default class ContextMenuTrigger extends Component<
+export class ContextMenuTrigger extends Component<
   ContextMenuTriggerProps & HiddenProps
 > {
   static propTypes = {

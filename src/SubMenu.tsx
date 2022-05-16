@@ -4,12 +4,13 @@ import cx from "classnames";
 import assign from "object-assign";
 
 import { hideMenu } from "./actions";
-import AbstractMenu, {
+import {
+  AbstractMenu,
   AbstractMenuProps,
   AbstractMenuStates,
 } from "./AbstractMenu";
 import { callIfExists, cssClasses, hasOwnProp, store } from "./helpers";
-import listener from "./globalEventListener";
+import { listener } from "./globalEventListener";
 import { Context } from "./ReactContextAPI";
 
 export type SubMenuProps = {
@@ -52,7 +53,7 @@ type HiddenProps = {
 
 type Props = SubMenuProps & HiddenProps & AbstractMenuProps;
 
-export default class SubMenu extends AbstractMenu<
+export class SubMenu extends AbstractMenu<
   SubMenuProps & HiddenProps,
   SubMenuStates
 > {

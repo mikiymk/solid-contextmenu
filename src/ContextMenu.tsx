@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import cx from "classnames";
 import assign from "object-assign";
 
-import listener from "./globalEventListener";
-import AbstractMenu, { AbstractMenuProps } from "./AbstractMenu";
-import SubMenu from "./SubMenu";
+import { listener } from "./globalEventListener";
+import { AbstractMenu, AbstractMenuProps } from "./AbstractMenu";
+import { SubMenu } from "./SubMenu";
 import { hideMenu } from "./actions";
 import { cssClasses, callIfExists, store } from "./helpers";
 import { Context } from "./ReactContextAPI";
@@ -37,7 +37,7 @@ type ContextMenuProps = {
   style?: React.CSSProperties;
 };
 
-export default class ContextMenu extends AbstractMenu<
+export class ContextMenu extends AbstractMenu<
   ContextMenuProps,
   ContextMenuStates
 > {
@@ -167,7 +167,7 @@ export default class ContextMenu extends AbstractMenu<
     callIfExists(this.props.onShow, e);
   };
 
-  handleHide = (e: { detail?: { id?: string } | number }) => {
+  handleHide = (e: Event & { detail?: { id?: string } | number }) => {
     if (
       this.state.isVisible &&
       (!e.detail ||
@@ -206,7 +206,7 @@ export default class ContextMenu extends AbstractMenu<
     if (process.env.NODE_ENV === "production") {
       e.preventDefault();
     }
-    this.handleHide(e);
+    this.handleHide(e as unknown as Event);
   };
 
   hideMenu = (e: KeyboardEvent) => {

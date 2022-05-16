@@ -36,7 +36,7 @@ type HiddenProps = {
   selected: boolean;
 };
 
-export default class MenuItem extends Component<MenuItemProps & HiddenProps> {
+export class MenuItem extends Component<MenuItemProps & HiddenProps> {
   ref: HTMLDivElement | null | undefined;
 
   static propTypes = {
