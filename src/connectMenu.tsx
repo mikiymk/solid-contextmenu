@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { ContextMenuTrigger } from "./ContextMenuTrigger";
 import { listener } from "./globalEventListener";
@@ -15,30 +15,15 @@ export type ConnectMenuProps = {
 };
 
 // expect the id of the menu to be responsible for as outer parameter
-export function connectMenu<P>(menuId: string) {
+export const connectMenu = <P,>(menuId: string) => {
   // expect menu component to connect as inner parameter
   // <Child/> is presumably a wrapper of <ContextMenu/>
-  return function connect(Child: React.ComponentType<P & ConnectMenuProps>) {
+  return (Child: React.ComponentType<P & ConnectMenuProps>): React.FC<P> => {
     // return wrapper for <Child/> that forwards the ContextMenuTrigger's additional props
-    return class ConnectMenu extends Component<P, { trigger: any }> {
-      private listenId: string | undefined;
+    return (props: P) => {
+      const [trigger, setTrigger] = useState(null);
 
-      constructor(props: P) {
-        super(props);
-        this.state = { trigger: null };
-      }
-
-      componentDidMount() {
-        this.listenId = listener.register(this.handleShow, this.handleHide);
-      }
-
-      componentWillUnmount() {
-        if (this.listenId) {
-          listener.unregister(this.listenId);
-        }
-      }
-
-      handleShow = (e: { detail: { id: string; data: any } }) => {
+      const handleShow = (e: { detail: { id: string; data: any } }) => {
         if (e.detail.id !== menuId) return;
 
         // the onShow event's detail.data object holds all ContextMenuTrigger props
@@ -51,18 +36,20 @@ export function connectMenu<P>(menuId: string) {
             filteredData[key] = data[key];
           }
         }
-        this.setState({ trigger: filteredData });
+        setTrigger(filteredData);
       };
 
-      handleHide = () => {
-        this.setState({ trigger: null });
-      };
+      const handleHide = () => setTrigger(null);
 
-      render() {
-        return (
-          <Child {...this.props} id={menuId} trigger={this.state.trigger} />
-        );
-      }
+      const listenId = useRef<string>();
+      useEffect(() => {
+        listenId.current = listener.register(handleShow, handleHide);
+        return () => {
+          listenId.current && listener.unregister(listenId.current);
+        };
+      });
+
+      return <Child {...props} id={menuId} trigger={trigger} />;
     };
   };
-}
+};
