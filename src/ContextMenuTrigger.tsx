@@ -6,7 +6,25 @@ import assign from 'object-assign';
 import { showMenu, hideMenu } from './actions';
 import { callIfExists, cssClasses } from './helpers';
 
-export default class ContextMenuTrigger extends Component {
+export type ContextMenuTriggerProps = {
+    id: string,
+    attributes?: React.HTMLAttributes<any>,
+    collect?: {(data: any): any},
+    disable?: boolean,
+    holdToDisplay?: number,
+    renderTag?: React.ElementType,
+    mouseButton?: number,
+    disableIfShiftIsPressed?: boolean,
+    [key: string]: any
+}
+
+type HiddenProps = {
+    children: React.ReactNode,
+    posX: number,
+    posY: number,
+}
+
+export default class ContextMenuTrigger extends Component<ContextMenuTriggerProps & HiddenProps> {
     static propTypes = {
         id: PropTypes.string.isRequired,
         children: PropTypes.node.isRequired,
@@ -34,83 +52,89 @@ export default class ContextMenuTrigger extends Component {
     };
 
     touchHandled = false;
+    mouseDownTimeoutId: number | undefined;
+    touchstartTimeoutId: number | undefined;
 
-    handleMouseDown = (event) => {
-        if (this.props.holdToDisplay >= 0 && event.button === 0) {
+    elem: HTMLElement | null | undefined;
+
+    handleMouseDown = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        const holdToDisplay = this.props.holdToDisplay ?? 1000
+        if (holdToDisplay >= 0 && event.button === 0) {
             event.persist();
             event.stopPropagation();
 
-            this.mouseDownTimeoutId = setTimeout(
+            this.mouseDownTimeoutId = window.setTimeout(
                 () => this.handleContextClick(event),
-                this.props.holdToDisplay
+                holdToDisplay
             );
         }
-        callIfExists(this.props.attributes.onMouseDown, event);
+        callIfExists(this.props.attributes?.onMouseDown, event);
     }
 
-    handleMouseUp = (event) => {
+    handleMouseUp = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (event.button === 0) {
             clearTimeout(this.mouseDownTimeoutId);
         }
-        callIfExists(this.props.attributes.onMouseUp, event);
+        callIfExists(this.props.attributes?.onMouseUp, event);
     }
 
-    handleMouseOut = (event) => {
+    handleMouseOut = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (event.button === 0) {
             clearTimeout(this.mouseDownTimeoutId);
         }
-        callIfExists(this.props.attributes.onMouseOut, event);
+        callIfExists(this.props.attributes?.onMouseOut, event);
     }
 
-    handleTouchstart = (event) => {
+    handleTouchstart = (event: React.TouchEvent<HTMLElement>) => {
         this.touchHandled = false;
+        const holdToDisplay = this.props.holdToDisplay ?? 1000
 
-        if (this.props.holdToDisplay >= 0) {
+        if (holdToDisplay >= 0) {
             event.persist();
             event.stopPropagation();
 
-            this.touchstartTimeoutId = setTimeout(
+            this.touchstartTimeoutId = window.setTimeout(
                 () => {
                     this.handleContextClick(event);
                     this.touchHandled = true;
                 },
-                this.props.holdToDisplay
+                holdToDisplay
             );
         }
-        callIfExists(this.props.attributes.onTouchStart, event);
+        callIfExists(this.props.attributes?.onTouchStart, event);
     }
 
-    handleTouchEnd = (event) => {
+    handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
         if (this.touchHandled) {
             event.preventDefault();
         }
         clearTimeout(this.touchstartTimeoutId);
-        callIfExists(this.props.attributes.onTouchEnd, event);
+        callIfExists(this.props.attributes?.onTouchEnd, event);
     }
 
-    handleContextMenu = (event) => {
+    handleContextMenu = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (event.button === this.props.mouseButton) {
             this.handleContextClick(event);
         }
-        callIfExists(this.props.attributes.onContextMenu, event);
+        callIfExists(this.props.attributes?.onContextMenu, event);
     }
 
-    handleMouseClick = (event) => {
+    handleMouseClick = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (event.button === this.props.mouseButton) {
             this.handleContextClick(event);
         }
-        callIfExists(this.props.attributes.onClick, event);
+        callIfExists(this.props.attributes?.onClick, event);
     }
 
-    handleContextClick = (event) => {
+    handleContextClick = (event: React.MouseEvent<HTMLElement, MouseEvent> | React.TouchEvent<HTMLElement>) => {
         if (this.props.disable) return;
         if (this.props.disableIfShiftIsPressed && event.shiftKey) return;
 
         event.preventDefault();
         event.stopPropagation();
 
-        let x = event.clientX || (event.touches && event.touches[0].pageX);
-        let y = event.clientY || (event.touches && event.touches[0].pageY);
+        let x = "clientX" in event ? event.clientX : (event.touches && event.touches[0].pageX);
+        let y = "clientY" in event ? event.clientY : (event.touches && event.touches[0].pageY);
 
         if (this.props.posX) {
             x -= this.props.posX;
@@ -122,12 +146,20 @@ export default class ContextMenuTrigger extends Component {
         hideMenu();
 
         let data = callIfExists(this.props.collect, this.props);
-        let showMenuConfig = {
+        let showMenuConfig: {
+            position: {
+                x: any;
+                y: any;
+            };
+            target: HTMLElement | null | undefined;
+            id: string;
+            data?: any;
+        } = {
             position: { x, y },
             target: this.elem,
             id: this.props.id
         };
-        if (data && (typeof data.then === 'function')) {
+        if (data && (typeof data.then === 'function') && data instanceof Promise) {
             // it's promise
             data.then((resp) => {
                 showMenuConfig.data = assign({}, resp, {
@@ -143,14 +175,14 @@ export default class ContextMenuTrigger extends Component {
         }
     }
 
-    elemRef = (c) => {
+    elemRef = (c: HTMLElement | null) => {
         this.elem = c;
     }
 
     render() {
         const { renderTag, attributes, children } = this.props;
         const newAttrs = assign({}, attributes, {
-            className: cx(cssClasses.menuWrapper, attributes.className),
+            className: cx(cssClasses.menuWrapper, attributes?.className),
             onContextMenu: this.handleContextMenu,
             onClick: this.handleMouseClick,
             onMouseDown: this.handleMouseDown,
@@ -161,6 +193,6 @@ export default class ContextMenuTrigger extends Component {
             ref: this.elemRef
         });
 
-        return React.createElement(renderTag, newAttrs, children);
+        return React.createElement(renderTag ?? "div", newAttrs, children);
     }
 }

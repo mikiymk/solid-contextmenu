@@ -6,7 +6,31 @@ import assign from 'object-assign';
 import { hideMenu } from './actions';
 import { callIfExists, cssClasses, store } from './helpers';
 
-export default class MenuItem extends Component {
+export type MenuItemProps = {
+    attributes?: React.HTMLAttributes<HTMLDivElement> & {
+        disabledClassName: string;
+        dividerClassName: string;
+        selectedClassName: string;
+    },
+    className?: string;
+    data?: Object,
+    disabled?: boolean,
+    divider?: boolean,
+    preventClose?: boolean,
+    onClick?: {(event: React.TouchEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>, data: Object, target: HTMLElement): void},
+}
+
+type HiddenProps = {
+    children: React.ReactNode,
+    onMouseLeave: ()=>void,
+    onMouseMove:  ()=>void,
+    selected: boolean
+}
+
+export default class MenuItem extends Component<MenuItemProps & HiddenProps> {
+
+    ref: HTMLDivElement | null | undefined;
+
     static propTypes = {
         attributes: PropTypes.object,
         children: PropTypes.node,
@@ -35,8 +59,8 @@ export default class MenuItem extends Component {
         selected: false
     };
 
-    handleClick = (event) => {
-        if (event.button !== 0 && event.button !== 1) {
+    handleClick = (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+        if ("button" in event && event.button !== 0 && event.button !== 1) {
             event.preventDefault();
         }
 
@@ -46,7 +70,7 @@ export default class MenuItem extends Component {
             this.props.onClick,
             event,
             assign({}, this.props.data, store.data),
-            store.target
+            store.target!
         );
 
         if (this.props.preventClose) return;
@@ -67,19 +91,19 @@ export default class MenuItem extends Component {
         const menuItemClassNames = cx(
             className,
             cssClasses.menuItem,
-            attributes.className,
+            attributes?.className,
             {
-                [cx(cssClasses.menuItemDisabled, attributes.disabledClassName)]: disabled,
-                [cx(cssClasses.menuItemDivider, attributes.dividerClassName)]: divider,
-                [cx(cssClasses.menuItemSelected, attributes.selectedClassName)]: selected
+                [cx(cssClasses.menuItemDisabled, attributes?.disabledClassName)]: disabled,
+                [cx(cssClasses.menuItemDivider, attributes?.dividerClassName)]: divider,
+                [cx(cssClasses.menuItemSelected, attributes?.selectedClassName)]: selected
             }
         );
 
         return (
             <div
                 {...attributes} className={menuItemClassNames}
-                role='menuitem' tabIndex='-1' aria-disabled={disabled ? 'true' : 'false'}
-                aria-orientation={divider ? 'horizontal' : null}
+                role='menuitem' tabIndex={-1} aria-disabled={disabled ? 'true' : 'false'}
+                aria-orientation={divider ? 'horizontal' : undefined}
                 ref={(ref) => { this.ref = ref; }}
                 onMouseMove={this.props.onMouseMove} onMouseLeave={this.props.onMouseLeave}
                 onTouchEnd={this.handleClick} onClick={this.handleClick}>

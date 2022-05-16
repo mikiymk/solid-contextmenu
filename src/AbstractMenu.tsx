@@ -3,22 +3,38 @@ import PropTypes from 'prop-types';
 
 import MenuItem from './MenuItem';
 
-export default class AbstractMenu extends Component {
+export type AbstractMenuProps = {
+    children: React.ReactElement
+}
+
+export type AbstractMenuStates = {
+    isVisible?: boolean
+    selectedItem: React.ReactElement | null,
+    forceSubMenuOpen: boolean
+}
+
+export default abstract class AbstractMenu<P, S = {}> extends Component<P & AbstractMenuProps, S & AbstractMenuStates> {
+
+    seletedItemRef: React.ReactElement | null;
+
     static propTypes = {
         children: PropTypes.node.isRequired
     };
 
-    constructor(props) {
+    constructor(props: P & AbstractMenuProps) {
         super(props);
 
         this.seletedItemRef = null;
         this.state = {
             selectedItem: null,
             forceSubMenuOpen: false
-        };
+        } as S & AbstractMenuStates;
     }
 
-    handleKeyNavigation = (e) => {
+    abstract hideMenu: (e: KeyboardEvent) => void;
+    abstract getSubMenuType(): string | React.JSXElementConstructor<any>;
+    
+    handleKeyNavigation = (e: KeyboardEvent) => {
         // check for isVisible strictly here as it might be undefined when this code executes in the context of SubMenu
         // but we only need to check when it runs in the ContextMenu context
         if (this.state.isVisible === false) {
@@ -69,20 +85,20 @@ export default class AbstractMenu extends Component {
         this.setState({ forceSubMenuOpen: false });
     }
 
-    tryToOpenSubMenu = (e) => {
+    tryToOpenSubMenu = (e: KeyboardEvent) => {
         if (this.state.selectedItem && this.state.selectedItem.type === this.getSubMenuType()) {
             e.preventDefault();
             this.setState({ forceSubMenuOpen: true });
         }
     }
 
-    selectChildren = (forward) => {
+    selectChildren = (forward: boolean) => {
         const { selectedItem } = this.state;
-        const children = [];
+        const children: (React.ReactElement | null)[] = [];
         let disabledChildrenCount = 0;
-        let disabledChildIndexes = {};
+        let disabledChildIndexes: Record<number, boolean> = {};
 
-        const childCollector = (child, index) => {
+        const childCollector = (child: React.ReactElement, index: number) => {
             // child can be empty in case you do conditional rendering of components, in which
             // case it should not be accounted for as a real child
             if (!child) {
@@ -108,7 +124,7 @@ export default class AbstractMenu extends Component {
             return;
         }
 
-        function findNextEnabledChildIndex(currentIndex) {
+        function findNextEnabledChildIndex(currentIndex: number) {
             let i = currentIndex;
             let incrementCounter = () => {
                 if (forward) {
@@ -152,12 +168,12 @@ export default class AbstractMenu extends Component {
         this.setState({ selectedItem: null, forceSubMenuOpen: false });
     }
 
-    renderChildren = children => React.Children.map(children, (child) => {
-        const props = {};
+    renderChildren = (children: React.ReactElement) => React.Children.map(children, (child) => {
+        const props: any = {};
         if (!React.isValidElement(child)) return child;
         if ([MenuItem, this.getSubMenuType()].indexOf(child.type) < 0) {
             // Maybe the MenuItem or SubMenu is capsuled in a wrapper div or something else
-            props.children = this.renderChildren(child.props.children);
+            props.children = this.renderChildren((child.props as any).children);
             return React.cloneElement(child, props);
         }
         props.onMouseLeave = this.onChildMouseLeave.bind(this);

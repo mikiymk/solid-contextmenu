@@ -1,8 +1,8 @@
-export function callIfExists(func, ...args) {
-    return (typeof func === 'function') && func(...args);
+export function callIfExists<F extends (...args:any) => any>(func?:F, ...args: Parameters<F>) : ReturnType<F>{   
+    return (typeof func === 'function') && func(...args as any[]);
 }
 
-export function hasOwnProp(obj, prop) {
+export function hasOwnProp<Key extends PropertyKey>(obj: any, prop: Key): obj is {[prop in Key]: any} {
     return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
@@ -22,7 +22,10 @@ export const cssClasses = {
     subMenu: 'react-contextmenu-submenu'
 };
 
-export const store = {};
+export const store: {
+    data?: Object;
+    target?: HTMLElement;
+} = {};
 
 export const canUseDOM = Boolean(
     typeof window !== 'undefined' && window.document && window.document.createElement

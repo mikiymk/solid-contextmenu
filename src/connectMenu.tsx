@@ -6,14 +6,22 @@ import listener from './globalEventListener';
 // collect ContextMenuTrigger's expected props to NOT pass them on as part of the context
 const ignoredTriggerProps = [...Object.keys(ContextMenuTrigger.propTypes), 'children'];
 
+export type ConnectMenuProps = {
+    id: string;
+    trigger: any;
+}
+
 // expect the id of the menu to be responsible for as outer parameter
-export default function (menuId) {
+export default function <P>(menuId: string) {
     // expect menu component to connect as inner parameter
     // <Child/> is presumably a wrapper of <ContextMenu/>
-    return function connect(Child) {
+    return function connect(Child: React.ComponentType<P & ConnectMenuProps>) {
         // return wrapper for <Child/> that forwards the ContextMenuTrigger's additional props
-        return class ConnectMenu extends Component {
-            constructor(props) {
+        return class ConnectMenu extends Component<P, { trigger: any }> {
+
+            private listenId: string | undefined;
+
+            constructor(props: P) {
                 super(props);
                 this.state = { trigger: null };
             }
@@ -28,12 +36,12 @@ export default function (menuId) {
                 }
             }
 
-            handleShow = (e) => {
+            handleShow = (e: { detail: { id: string, data: any }}) => {
                 if (e.detail.id !== menuId) return;
 
                 // the onShow event's detail.data object holds all ContextMenuTrigger props
                 const { data } = e.detail;
-                const filteredData = {};
+                const filteredData: any = {};
 
                 for (const key in data) {
                     // exclude props the ContextMenuTrigger is expecting itself

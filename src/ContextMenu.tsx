@@ -4,12 +4,37 @@ import cx from 'classnames';
 import assign from 'object-assign';
 
 import listener from './globalEventListener';
-import AbstractMenu from './AbstractMenu';
+import AbstractMenu, { AbstractMenuProps } from './AbstractMenu';
 import SubMenu from './SubMenu';
 import { hideMenu } from './actions';
 import { cssClasses, callIfExists, store } from './helpers';
 
-export default class ContextMenu extends AbstractMenu {
+export type ContextMenuStates = {
+    x: number,
+    y: number,
+    isVisible: boolean
+}
+
+type ContextMenuProps = {
+    id: string,
+    data?: any,
+    className?: string,
+    hideOnLeave?: boolean,
+    rtl?: boolean,
+    onHide?: {(event: any): void},
+    onMouseLeave?: {(event: React.MouseEvent<HTMLElement>, data: Object, target: HTMLElement): void},
+    onShow?: {(event: any): void},
+    preventHideOnContextMenu?: boolean,
+    preventHideOnResize?: boolean,
+    preventHideOnScroll?: boolean,
+    style?: React.CSSProperties,
+}
+
+export default class ContextMenu extends AbstractMenu<ContextMenuProps, ContextMenuStates> {
+
+    listenId: string | undefined;
+    menu: HTMLElement | null | undefined
+
     static propTypes = {
         id: PropTypes.string.isRequired,
         children: PropTypes.node.isRequired,
@@ -40,7 +65,7 @@ export default class ContextMenu extends AbstractMenu {
         style: {}
     };
 
-    constructor(props) {
+    constructor(props: ContextMenuProps & AbstractMenuProps) {
         super(props);
 
         this.state = assign({}, this.state, {
@@ -72,14 +97,14 @@ export default class ContextMenu extends AbstractMenu {
                     if (!this.menu) return;
                     this.menu.style.top = `${top}px`;
                     this.menu.style.left = `${left}px`;
-                    this.menu.style.opacity = 1;
+                    this.menu.style.opacity = "1";
                     this.menu.style.pointerEvents = 'auto';
                 });
             });
         } else {
             wrapper(() => {
                 if (!this.menu) return;
-                this.menu.style.opacity = 0;
+                this.menu.style.opacity = "0";
                 this.menu.style.pointerEvents = 'none';
             });
         }
@@ -111,7 +136,7 @@ export default class ContextMenu extends AbstractMenu {
         window.removeEventListener('resize', this.handleHide);
     }
 
-    handleShow = (e) => {
+    handleShow = (e: { detail: { id: string, position: { x: number, y: number }}}) => {
         if (e.detail.id !== this.props.id || this.state.isVisible) return;
 
         const { x, y } = e.detail.position;
@@ -121,39 +146,39 @@ export default class ContextMenu extends AbstractMenu {
         callIfExists(this.props.onShow, e);
     }
 
-    handleHide = (e) => {
-        if (this.state.isVisible && (!e.detail || !e.detail.id || e.detail.id === this.props.id)) {
+    handleHide = (e: { detail?: { id?: string } | number }) => {
+        if (this.state.isVisible && (!e.detail || typeof e.detail === "number" || !e.detail.id || e.detail.id === this.props.id)) {
             this.unregisterHandlers();
             this.setState({ isVisible: false, selectedItem: null, forceSubMenuOpen: false });
             callIfExists(this.props.onHide, e);
         }
     }
 
-    handleOutsideClick = (e) => {
-        if (!this.menu.contains(e.target)) hideMenu();
+    handleOutsideClick = (e: Event) => {
+        if (!this.menu?.contains(e.target as Node)) hideMenu();
     }
 
-    handleMouseLeave = (event) => {
+    handleMouseLeave = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         event.preventDefault();
 
         callIfExists(
             this.props.onMouseLeave,
             event,
             assign({}, this.props.data, store.data),
-            store.target
+            store.target!
         );
 
         if (this.props.hideOnLeave) hideMenu();
     }
 
-    handleContextMenu = (e) => {
+    handleContextMenu = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
         if (process.env.NODE_ENV === 'production') {
             e.preventDefault();
         }
         this.handleHide(e);
     }
 
-    hideMenu = (e) => {
+    hideMenu = (e: KeyboardEvent) => {
         if (e.keyCode === 27 || e.keyCode === 13) { // ECS or enter
             hideMenu();
         }
@@ -222,7 +247,7 @@ export default class ContextMenu extends AbstractMenu {
         return menuStyles;
     }
 
-    menuRef = (c) => {
+    menuRef = (c: HTMLElement | null) => {
         this.menu = c;
     }
 
@@ -240,7 +265,7 @@ export default class ContextMenu extends AbstractMenu {
 
         return (
             <nav
-                role='menu' tabIndex='-1' ref={this.menuRef} style={inlineStyle} className={menuClassnames}
+                role='menu' tabIndex={-1} ref={this.menuRef} style={inlineStyle} className={menuClassnames}
                 onContextMenu={this.handleContextMenu} onMouseLeave={this.handleMouseLeave}>
                 {this.renderChildren(children)}
             </nav>

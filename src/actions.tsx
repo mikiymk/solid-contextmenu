@@ -5,8 +5,9 @@ import { store } from './helpers';
 export const MENU_SHOW = 'REACT_CONTEXTMENU_SHOW';
 export const MENU_HIDE = 'REACT_CONTEXTMENU_HIDE';
 
+type EventName = typeof MENU_SHOW | typeof MENU_HIDE;
 
-export function dispatchGlobalEvent(eventName, opts, target = window) {
+export function dispatchGlobalEvent<T>(eventName: EventName, opts: T, target: EventTarget = window) {
     // Compatibale with IE
     // @see http://stackoverflow.com/questions/26596123/internet-explorer-9-10-11-event-constructor-doesnt-work
     let event;
@@ -24,10 +25,10 @@ export function dispatchGlobalEvent(eventName, opts, target = window) {
     }
 }
 
-export function showMenu(opts = {}, target) {
+export function showMenu(opts: any = {}, target?: EventTarget) {
     dispatchGlobalEvent(MENU_SHOW, assign({}, opts, { type: MENU_SHOW }), target);
 }
 
-export function hideMenu(opts = {}, target) {
+export function hideMenu(opts: any = {}, target?: EventTarget) {
     dispatchGlobalEvent(MENU_HIDE, assign({}, opts, { type: MENU_HIDE }), target);
 }
