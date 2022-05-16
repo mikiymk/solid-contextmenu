@@ -199,10 +199,10 @@ export default abstract class AbstractMenu<P, S = {}> extends Component<
         props.ref = (ref) => {
           this.seletedItemRef = ref;
         };
-        return React.cloneElement(child, props);
+      } else {
+        // onMouseMove is only needed for non selected items
+        props.onMouseMove = () => this.onChildMouseMove(child);
       }
-      // onMouseMove is only needed for non selected items
-      props.onMouseMove = () => this.onChildMouseMove(child);
       return React.cloneElement(child, props);
     });
 }

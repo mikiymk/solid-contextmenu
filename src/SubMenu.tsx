@@ -10,6 +10,7 @@ import AbstractMenu, {
 } from "./AbstractMenu";
 import { callIfExists, cssClasses, hasOwnProp, store } from "./helpers";
 import listener from "./globalEventListener";
+import { Context } from "./ReactContextAPI";
 
 export type SubMenuProps = {
   title: React.ReactElement<any> | React.ReactText;
@@ -347,7 +348,6 @@ export default class SubMenu extends AbstractMenu<
         [cx(cssClasses.menuItemSelected, attributes?.selectedClassName)]:
           selected,
       }),
-      onMouseMove: this.props.onMouseMove,
       onMouseOut: this.props.onMouseOut,
       onClick: this.handleClick,
     };
@@ -363,14 +363,51 @@ export default class SubMenu extends AbstractMenu<
     };
 
     return (
-      <nav {...menuProps} role="menuitem" tabIndex={-1} aria-haspopup="true">
-        <div {...attributes} {...menuItemProps}>
-          {title}
-        </div>
-        <nav {...subMenuProps} role="menu" tabIndex={-1}>
-          {this.renderChildren(children)}
-        </nav>
-      </nav>
+      <Context.Consumer>
+        {(value) => (
+          <Context.Provider
+            value={{
+              onMouseLeave: () => this.onChildMouseLeave(),
+
+              // onMouseMove is only needed for non selected items
+              onMouseMove: (child: any) => this.onChildMouseMove(child),
+
+              // special props for SubMenu only
+              forceOpen: (child: any) =>
+                this.state.forceSubMenuOpen &&
+                this.state.selectedItem === child,
+              forceClose: () => this.handleForceClose(),
+              parentKeyNavigationHandler: (event: KeyboardEvent) =>
+                this.handleKeyNavigation(event),
+
+              // special props for selected item only
+              selected: (child: any) =>
+                !child.props.divider && this.state.selectedItem === child,
+              ref: (ref: React.ReactElement | null) => {
+                this.seletedItemRef = ref;
+              },
+            }}
+          >
+            <nav
+              {...menuProps}
+              role="menuitem"
+              tabIndex={-1}
+              aria-haspopup="true"
+            >
+              <div
+                {...attributes}
+                {...menuItemProps}
+                onMouseMove={value.onMouseMove}
+              >
+                {title}
+              </div>
+              <nav {...subMenuProps} role="menu" tabIndex={-1}>
+                {this.renderChildren(children)}
+              </nav>
+            </nav>
+          </Context.Provider>
+        )}
+      </Context.Consumer>
     );
   }
 }

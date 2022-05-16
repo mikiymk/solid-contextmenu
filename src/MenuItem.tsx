@@ -5,6 +5,7 @@ import assign from "object-assign";
 
 import { hideMenu } from "./actions";
 import { callIfExists, cssClasses, store } from "./helpers";
+import { Context } from "./ReactContextAPI";
 
 export type MenuItemProps = {
   attributes?: React.HTMLAttributes<HTMLDivElement> & {
@@ -90,40 +91,50 @@ export default class MenuItem extends Component<MenuItemProps & HiddenProps> {
   };
 
   render() {
-    const { attributes, children, className, disabled, divider, selected } =
-      this.props;
-
-    const menuItemClassNames = cx(
-      className,
-      cssClasses.menuItem,
-      attributes?.className,
-      {
-        [cx(cssClasses.menuItemDisabled, attributes?.disabledClassName)]:
-          disabled,
-        [cx(cssClasses.menuItemDivider, attributes?.dividerClassName)]: divider,
-        [cx(cssClasses.menuItemSelected, attributes?.selectedClassName)]:
-          selected,
-      }
-    );
+    const { attributes, children, className, disabled, divider } = this.props;
 
     return (
-      <div
-        {...attributes}
-        className={menuItemClassNames}
-        role="menuitem"
-        tabIndex={-1}
-        aria-disabled={disabled ? "true" : "false"}
-        aria-orientation={divider ? "horizontal" : undefined}
-        ref={(ref) => {
-          this.ref = ref;
+      <Context.Consumer>
+        {(value) => {
+          return (
+            <div
+              {...attributes}
+              className={cx(
+                className,
+                cssClasses.menuItem,
+                attributes?.className,
+                {
+                  [cx(
+                    cssClasses.menuItemDisabled,
+                    attributes?.disabledClassName
+                  )]: disabled,
+                  [cx(
+                    cssClasses.menuItemDivider,
+                    attributes?.dividerClassName
+                  )]: divider,
+                  [cx(
+                    cssClasses.menuItemSelected,
+                    attributes?.selectedClassName
+                  )]: value.selected(this),
+                }
+              )}
+              role="menuitem"
+              tabIndex={-1}
+              aria-disabled={disabled ? "true" : "false"}
+              aria-orientation={divider ? "horizontal" : undefined}
+              ref={(ref) => {
+                this.ref = ref;
+              }}
+              onMouseMove={value.onMouseMove}
+              onMouseLeave={value.onMouseLeave}
+              onTouchEnd={this.handleClick}
+              onClick={this.handleClick}
+            >
+              {divider ? null : children}
+            </div>
+          );
         }}
-        onMouseMove={this.props.onMouseMove}
-        onMouseLeave={this.props.onMouseLeave}
-        onTouchEnd={this.handleClick}
-        onClick={this.handleClick}
-      >
-        {divider ? null : children}
-      </div>
+      </Context.Consumer>
     );
   }
 }

@@ -8,6 +8,7 @@ import AbstractMenu, { AbstractMenuProps } from "./AbstractMenu";
 import SubMenu from "./SubMenu";
 import { hideMenu } from "./actions";
 import { cssClasses, callIfExists, store } from "./helpers";
+import { Context } from "./ReactContextAPI";
 
 export type ContextMenuStates = {
   x: number;
@@ -299,17 +300,40 @@ export default class ContextMenu extends AbstractMenu<
     });
 
     return (
-      <nav
-        role="menu"
-        tabIndex={-1}
-        ref={this.menuRef}
-        style={inlineStyle}
-        className={menuClassnames}
-        onContextMenu={this.handleContextMenu}
-        onMouseLeave={this.handleMouseLeave}
+      <Context.Provider
+        value={{
+          onMouseLeave: () => this.onChildMouseLeave(),
+
+          // onMouseMove is only needed for non selected items
+          onMouseMove: (child: any) => this.onChildMouseMove(child),
+
+          // special props for SubMenu only
+          forceOpen: (child: any) =>
+            this.state.forceSubMenuOpen && this.state.selectedItem === child,
+          forceClose: () => this.handleForceClose(),
+          parentKeyNavigationHandler: (event: KeyboardEvent) =>
+            this.handleKeyNavigation(event),
+
+          // special props for selected item only
+          selected: (child: any) =>
+            !child.props.divider && this.state.selectedItem === child,
+          ref: (ref: React.ReactElement | null) => {
+            this.seletedItemRef = ref;
+          },
+        }}
       >
-        {this.renderChildren(children)}
-      </nav>
+        <nav
+          role="menu"
+          tabIndex={-1}
+          ref={this.menuRef}
+          style={inlineStyle}
+          className={menuClassnames}
+          onContextMenu={this.handleContextMenu}
+          onMouseLeave={this.handleMouseLeave}
+        >
+          {this.renderChildren(children)}
+        </nav>
+      </Context.Provider>
     );
   }
 }
