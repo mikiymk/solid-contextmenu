@@ -1,5 +1,4 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
+import React, { Component, useContext, useRef } from "react";
 import cx from "classnames";
 import assign from "object-assign";
 
@@ -36,105 +35,60 @@ type HiddenProps = {
   selected: boolean;
 };
 
-export class MenuItem extends Component<MenuItemProps & HiddenProps> {
-  ref: HTMLDivElement | null | undefined;
+export const MenuItem: React.FC<MenuItemProps & HiddenProps> = (props) => {
+  const value = useContext(Context);
+  const ref = useRef<HTMLDivElement>(null);
 
-  static propTypes = {
-    attributes: PropTypes.object,
-    children: PropTypes.node,
-    className: PropTypes.string,
-    data: PropTypes.object,
-    disabled: PropTypes.bool,
-    divider: PropTypes.bool,
-    onClick: PropTypes.func,
-    onMouseLeave: PropTypes.func,
-    onMouseMove: PropTypes.func,
-    preventClose: PropTypes.bool,
-    selected: PropTypes.bool,
-  };
+  const className = cx(
+    props.className,
+    cssClasses.menuItem,
+    props.attributes?.className,
+    {
+      [cx(cssClasses.menuItemDisabled, props.attributes?.disabledClassName)]:
+        props.disabled,
+      [cx(cssClasses.menuItemDivider, props.attributes?.dividerClassName)]:
+        props.divider,
+      [cx(cssClasses.menuItemSelected, props.attributes?.selectedClassName)]:
+        value.selected(this),
+    }
+  );
 
-  static defaultProps = {
-    attributes: {},
-    children: null,
-    className: "",
-    data: {},
-    disabled: false,
-    divider: false,
-    onClick() {
-      return null;
-    },
-    onMouseMove: () => null,
-    onMouseLeave: () => null,
-    preventClose: false,
-    selected: false,
-  };
-
-  handleClick = (
+  const handleClick = (
     event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
   ) => {
     if ("button" in event && event.button !== 0 && event.button !== 1) {
       event.preventDefault();
     }
 
-    if (this.props.disabled || this.props.divider) return;
+    if (props.disabled || props.divider) return;
 
     callIfExists(
-      this.props.onClick,
+      props.onClick,
       event,
-      assign({}, this.props.data, store.data),
+      assign({}, props.data, store.data),
       store.target!
     );
 
-    if (this.props.preventClose) return;
+    if (props.preventClose) return;
 
     hideMenu();
   };
 
-  render() {
-    const { attributes, children, className, disabled, divider } = this.props;
-
-    return (
-      <Context.Consumer>
-        {(value) => {
-          return (
-            <div
-              {...attributes}
-              className={cx(
-                className,
-                cssClasses.menuItem,
-                attributes?.className,
-                {
-                  [cx(
-                    cssClasses.menuItemDisabled,
-                    attributes?.disabledClassName
-                  )]: disabled,
-                  [cx(
-                    cssClasses.menuItemDivider,
-                    attributes?.dividerClassName
-                  )]: divider,
-                  [cx(
-                    cssClasses.menuItemSelected,
-                    attributes?.selectedClassName
-                  )]: value.selected(this),
-                }
-              )}
-              role="menuitem"
-              tabIndex={-1}
-              aria-disabled={disabled ? "true" : "false"}
-              aria-orientation={divider ? "horizontal" : undefined}
-              ref={(ref) => {
-                this.ref = ref;
-              }}
-              onMouseMove={value.onMouseMove}
-              onMouseLeave={value.onMouseLeave}
-              onTouchEnd={this.handleClick}
-              onClick={this.handleClick}
-            >
-              {divider ? null : children}
-            </div>
-          );
-        }}
-      </Context.Consumer>
-    );
-  }
-}
+  return (
+    <div
+      {...props.attributes}
+      className={className}
+      role="menuitem"
+      tabIndex={-1}
+      aria-disabled={props.disabled ? "true" : "false"}
+      aria-orientation={props.divider ? "horizontal" : undefined}
+      ref={ref}
+      onMouseMove={value.onMouseMove}
+      onMouseLeave={value.onMouseLeave}
+      onTouchEnd={handleClick}
+      onClick={handleClick}
+    >
+      {props.divider ? null : props.children}
+    </div>
+  );
+};
