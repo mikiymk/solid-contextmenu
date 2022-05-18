@@ -1,25 +1,18 @@
 import { defineConfig } from "vite";
+import solid from "vite-plugin-solid"
 import path from "path";
 
 export default defineConfig({
-  plugins: [],
+  plugins: [solid()],
   build: {
     lib: {
-      entry: path.resolve(__dirname, "src/index.tsx"),
-      name: "solid-contextmenu",
-      formats: ["es", "cjs", "umd"],
+      entry: path.resolve(__dirname, "src/index.ts"),
+      formats: ["es", "cjs"],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
       // into your library
-      external: ["react"],
-      output: {
-        // Provide global variables to use in the UMD build
-        // for externalized deps
-        globals: {
-          react: "React",
-        },
-      },
+      external: ["solid-js"],
     },
   },
 });

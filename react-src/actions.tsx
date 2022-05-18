@@ -14,7 +14,7 @@ export function dispatchGlobalEvent<T>(
 ) {
   // Compatibale with IE
   // @see http://stackoverflow.com/questions/26596123/internet-explorer-9-10-11-event-constructor-doesnt-work
-  let event;
+  let event: CustomEvent<T>;
 
   if (typeof window.CustomEvent === "function") {
     event = new window.CustomEvent(eventName, { detail: opts });
@@ -29,10 +29,10 @@ export function dispatchGlobalEvent<T>(
   }
 }
 
-export function showMenu(opts: any = {}, target?: EventTarget) {
+export function showMenu(opts: object = {}, target?: EventTarget) {
   dispatchGlobalEvent(MENU_SHOW, assign({}, opts, { type: MENU_SHOW }), target);
 }
 
-export function hideMenu(opts: any = {}, target?: EventTarget) {
+export function hideMenu(opts: object = {}, target?: EventTarget) {
   dispatchGlobalEvent(MENU_HIDE, assign({}, opts, { type: MENU_HIDE }), target);
 }

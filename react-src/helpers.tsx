@@ -28,7 +28,7 @@ export const cssClasses = {
   subMenu: "react-contextmenu-submenu",
 };
 
-export const store: {
+export const store: object & {
   data?: Object;
   target?: HTMLElement;
 } = {};

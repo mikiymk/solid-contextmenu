@@ -1,14 +1,23 @@
 import { MENU_SHOW, MENU_HIDE } from "./actions";
 import { uniqueId, hasOwnProp, canUseDOM } from "./helpers";
 
-type EventCallback = (event: CustomEvent) => void;
+export type ShowOptions = {
+  id: string;
+  target: EventTarget;
+  position?: { x: number; y: number };
+};
+
+export type HideOptions = { detail?: { id?: string } };
+
+type ShowCallback = (event: CustomEvent<ShowOptions>) => void;
+type HideCallback = (event: CustomEvent<HideOptions>) => void;
 
 class GlobalEventListener {
   private callbacks: Record<
     string,
     {
-      show: EventCallback;
-      hide: EventCallback;
+      show: ShowCallback;
+      hide: HideCallback;
     }
   >;
 
@@ -24,18 +33,18 @@ class GlobalEventListener {
   handleShowEvent = (event: Event) => {
     for (const id in this.callbacks) {
       if (hasOwnProp(this.callbacks, id))
-        this.callbacks[id].show(event as CustomEvent);
+        this.callbacks[id].show(event as CustomEvent<ShowOptions>);
     }
   };
 
   handleHideEvent = (event: Event) => {
     for (const id in this.callbacks) {
       if (hasOwnProp(this.callbacks, id))
-        this.callbacks[id].hide(event as CustomEvent);
+        this.callbacks[id].hide(event as CustomEvent<HideOptions>);
     }
   };
 
-  register = (showCallback: EventCallback, hideCallback: EventCallback) => {
+  register = (showCallback: ShowCallback, hideCallback: HideCallback) => {
     const id = uniqueId();
 
     this.callbacks[id] = {
