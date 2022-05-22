@@ -1,1 +1,5 @@
-export const SubMenu = (props: any) => {};
+export type SubMenuProps = {
+
+}
+
+export const SubMenu = (props: SubMenuProps) => {};
